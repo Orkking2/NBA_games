@@ -85,7 +85,7 @@ class ProxyIps:
     self, 
     ips: List[str]
   ):
-    self.ips.union(ips)
+    self.ips += set(ips)
     return self
   
   def add_source(
