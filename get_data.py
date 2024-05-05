@@ -1,3 +1,5 @@
+CSV_PATH = "data/"
+
 import time
 
 GENISIS = time.perf_counter()
@@ -31,6 +33,11 @@ def retry_exceptions(f, on_fail = None):
       except: 
         if on_fail is not None: on_fail()
   return wrapped
+
+def update_file(filename):
+  print(f"Updating {filename} from repo...")
+  open(file=f"{CSV_PATH}{filename}", mode="w").write(requests.get(f"https://raw.githubusercontent.com/Orkking2/NBA_games/main/{CSV_PATH}{filename}").text)
+
 
 class UniTPIMapIt:
   def __init__(self, func, iterable):
@@ -196,7 +203,7 @@ leaguedf = leaguedashteamstats.LeagueDashTeamStats()\
       .set_index("TEAM_ID"), 
     on="TEAM_ID"
   )
-leaguedf.to_csv("teams.csv", index=False)
+leaguedf.to_csv(f"{CSV_PATH}teams.csv", index=False)
 print(f"teams.csv updated -\t{time.perf_counter() - epoch}s")
 
 def count(f, counter, total, name):
@@ -216,7 +223,8 @@ pd.concat(
     iterable=set(leaguedf["TEAM_ID"]),
     desc="Updating players.csv"
   )
-).reset_index(drop=True).to_csv("players.csv")
+).reset_index(drop=True).to_csv(f"{CSV_PATH}players.csv")
+
 
 games = pd.concat(
   tqdm_imap(
@@ -230,7 +238,7 @@ games = pd.concat(
   )
 ).reset_index(drop=True)
 games["GAME_ID"] = pd.to_numeric(games["GAME_ID"])
-games.to_csv("games_raw.csv", index=False)
+games.to_csv(f"{CSV_PATH}games_raw.csv", index=False)
 
 ahids = pd.concat(
   tqdm_imap(
@@ -239,7 +247,7 @@ ahids = pd.concat(
       f=lambda id: boxscoresummaryv2.BoxScoreSummaryV2(game_id=str(id).zfill(10), timeout=60, proxy=ips.get_proxy())\
         .get_data_frames()[0],
     ),
-    iterable=set(games["GAME_ID"]) - set(pd.read_csv("games.csv")["GAME_ID"]),
+    iterable=set(games["GAME_ID"]) - set(pd.read_csv(f"{CSV_PATH}games.csv")["GAME_ID"]),
     desc="Collecting ahids"
   )
 ).reset_index(drop=True)
@@ -293,7 +301,7 @@ print(f"joined home and away games -\t{time.perf_counter() - epoch}s")
 
 print("games.csv updating...")
 epoch = time.perf_counter()
-games.to_csv("games.csv", index=False, mode="a")
+games.to_csv(f"{CSV_PATH}games.csv", index=False, mode="a")
 print(f"games.csv updated -\t{time.perf_counter() - epoch}s")
 
 print(f"all data updated in {time.perf_counter() - GENISIS} seconds")
