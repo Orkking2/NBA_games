@@ -34,10 +34,14 @@ def retry_exceptions(f, on_fail = None):
         if on_fail is not None: on_fail()
   return wrapped
 
-def update_file(filename):
-  print(f"Updating {filename} from repo...")
-  open(file=f"{CSV_PATH}{filename}", mode="w").write(requests.get(f"https://raw.githubusercontent.com/Orkking2/NBA_games/main/{CSV_PATH}{filename}").text)
-
+def get_git_file(
+  filename: str, 
+  csv_path: str = CSV_PATH
+):
+  print(f"Getting {filename} from repo...")
+  return requests.get(
+    f"https://raw.githubusercontent.com/Orkking2/NBA_games/main/{csv_path}{filename}"
+  ).text
 
 class UniTPIMapIt:
   def __init__(self, func, iterable):
@@ -223,8 +227,9 @@ pd.concat(
     iterable=set(leaguedf["TEAM_ID"]),
     desc="Updating players.csv"
   )
-).reset_index(drop=True).to_csv(f"{CSV_PATH}players.csv")
+).reset_index(drop=True).to_csv(f"{CSV_PATH}players.csv", index=False)
 
+open(file=f"{CSV_PATH}games.csv", mode="w").write(get_git_file("games.csv"))
 
 games = pd.concat(
   tqdm_imap(
